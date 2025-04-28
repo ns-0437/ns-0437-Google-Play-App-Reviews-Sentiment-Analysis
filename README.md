@@ -45,4 +45,6 @@ cd frontend
 npm install
 npm run dev
 
+---
+
 Frontend will run at: http://localhost:3000
