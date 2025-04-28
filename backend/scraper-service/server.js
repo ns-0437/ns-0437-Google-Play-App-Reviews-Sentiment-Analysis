@@ -8,6 +8,7 @@ const port = 3001;
 app.use(cors());
 app.use(express.json());
 
+
 app.post('/get-reviews', async (req, res) => {
     const { appId } = req.body;
 
@@ -22,6 +23,7 @@ app.post('/get-reviews', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
 
 app.listen(port, () => {
     console.log(`Scraper Service running at http://localhost:${port}`);
