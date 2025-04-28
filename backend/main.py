@@ -23,6 +23,11 @@ sentiment_pipeline = pipeline("sentiment-analysis")
 class AppNameRequest(BaseModel):
     appName: str
 
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
+executor = ThreadPoolExecutor()
+
 @app.post("/analyze-reviews")
 async def analyze_reviews(request: AppNameRequest):
     app_id = request.appName
@@ -38,16 +43,17 @@ async def analyze_reviews(request: AppNameRequest):
 
     review_texts = [r['content'] for r in result if r.get('content')]
 
-    # Analyze sentiments asynchronously
+    # True Async function
     async def analyze(text):
-        return sentiment_pipeline(text)[0]
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(executor, sentiment_pipeline, text)
 
     tasks = [analyze(text) for text in review_texts]
     sentiments = await asyncio.gather(*tasks)
 
     # Calculate average sentiment score
     score_mapping = {'POSITIVE': 1, 'NEGATIVE': 0}
-    scores = [score_mapping[s['label']] for s in sentiments]
+    scores = [score_mapping[s[0]['label']] for s in sentiments]
     avg_score = sum(scores) / len(scores) if scores else 0
 
     return {
