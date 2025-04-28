@@ -12,4 +12,5 @@ venv/
 .DS_Store
 Thumbs.db
 # Ignore Node.js modules
+
 scraper-service/node_modules/
