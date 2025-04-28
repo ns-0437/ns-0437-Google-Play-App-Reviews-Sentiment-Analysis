@@ -33,3 +33,12 @@ python -m venv venv
 .\venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn main:app --reload
+
+Backend will run at: http://127.0.0.1:8000/docs
+
+
+cd frontend
+npm install
+npm run dev
+
+Frontend will run at: http://localhost:3000
