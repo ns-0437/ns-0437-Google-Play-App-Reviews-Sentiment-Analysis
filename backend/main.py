@@ -1,6 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from google_play_scraper import Sort, reviews
+from google_play_scraper.exceptions import NotFoundError
 from transformers import pipeline
 import asyncio
 
@@ -35,10 +36,18 @@ async def analyze_reviews(request: AppNameRequest):
 
     # Fetch reviews. google_play_scraper does blocking network I/O, so it runs in the thread pool;
     # called directly it froze the event loop (every other request) for the whole fetch.
-    result, _ = await loop.run_in_executor(
-        executor,
-        lambda: reviews(app_id, lang='en', country='us', sort=Sort.NEWEST, count=100),
-    )
+    try:
+        result, _ = await loop.run_in_executor(
+            executor,
+            lambda: reviews(app_id, lang='en', country='us', sort=Sort.NEWEST, count=100),
+        )
+    except NotFoundError:
+        # A mistyped package name is the caller's error, not a server fault.
+        raise HTTPException(status_code=404, detail=f"No app found with id {app_id!r}")
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail=f"Could not fetch reviews for {app_id!r}: {exc}"
+        ) from exc
 
     review_texts = [r['content'] for r in result if r.get('content')]
 
