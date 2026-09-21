@@ -53,7 +53,11 @@ async def analyze_reviews(request: AppNameRequest):
 
     # True Async function
     async def analyze(text):
-        return await loop.run_in_executor(executor, sentiment_pipeline, text)
+        # The model accepts at most 512 tokens and Play Store reviews can run to 4000 characters;
+        # without truncation one long review raised inside the pipeline and failed the whole request.
+        return await loop.run_in_executor(
+            executor, lambda: sentiment_pipeline(text, truncation=True, max_length=512)
+        )
 
     tasks = [analyze(text) for text in review_texts]
     sentiments = await asyncio.gather(*tasks)

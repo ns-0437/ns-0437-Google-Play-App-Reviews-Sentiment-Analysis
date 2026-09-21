@@ -28,3 +28,10 @@ def test_scraper_failure_is_a_502_with_a_message(client, api_state):
     response = client.post("/analyze-reviews", json={"appName": "com.example.app"})
     assert response.status_code == 502
     assert "play store unreachable" in response.json()["detail"]
+
+
+def test_reviews_are_truncated_to_the_model_limit(client, api_state):
+    """distilbert-sst2 accepts 512 tokens; a longer review raises unless truncation is on."""
+    api_state.reviews_result = [{"content": "good " * 2000}]
+    assert client.post("/analyze-reviews", json={"appName": "com.example.app"}).status_code == 200
+    assert api_state.pipeline_kwargs == [{"truncation": True, "max_length": 512}]
