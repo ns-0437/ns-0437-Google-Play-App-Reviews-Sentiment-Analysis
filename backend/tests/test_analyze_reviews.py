@@ -35,3 +35,13 @@ def test_reviews_are_truncated_to_the_model_limit(client, api_state):
     api_state.reviews_result = [{"content": "good " * 2000}]
     assert client.post("/analyze-reviews", json={"appName": "com.example.app"}).status_code == 200
     assert api_state.pipeline_kwargs == [{"truncation": True, "max_length": 512}]
+
+
+def test_cors_does_not_allow_credentials_for_arbitrary_origins(client):
+    """allow_credentials=True together with a wildcard origin makes Starlette reflect whatever
+    Origin the caller sends as a credentialed, trusted origin."""
+    response = client.options(
+        "/analyze-reviews",
+        headers={"Origin": "https://evil.example", "Access-Control-Request-Method": "POST"},
+    )
+    assert "access-control-allow-credentials" not in response.headers
