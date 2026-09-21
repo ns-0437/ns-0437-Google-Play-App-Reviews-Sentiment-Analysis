@@ -12,6 +12,12 @@ app.use(express.json());
 app.post('/get-reviews', async (req, res) => {
     const { appId } = req.body;
 
+    // A missing or non-string appId is a client error; without this it reached the scraper and
+    // came back as a 500 with an internal message.
+    if (typeof appId !== 'string' || appId.trim() === '') {
+        return res.status(400).json({ error: 'appId is required and must be a non-empty string' });
+    }
+
     try {
         const reviews = await gplay.reviews({
             appId: appId,
@@ -20,7 +26,9 @@ app.post('/get-reviews', async (req, res) => {
         });
         res.json(reviews.data);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        // google-play-scraper reports an unknown package as an error containing "not found".
+        const status = /not found/i.test(error.message) ? 404 : 500;
+        res.status(status).json({ error: error.message });
     }
 });
 
