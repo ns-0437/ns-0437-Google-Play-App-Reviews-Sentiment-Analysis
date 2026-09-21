@@ -4,15 +4,22 @@ from google_play_scraper import Sort, reviews
 from google_play_scraper.exceptions import NotFoundError
 from transformers import pipeline
 import asyncio
+import os
 
 app = FastAPI()
 
 from fastapi.middleware.cors import CORSMiddleware
 
+# Comma-separated list of allowed browser origins, e.g. "https://app.example.com". Defaults to any
+# origin, which is fine for a public read-only demo API; set it when the frontend has a fixed URL.
+ALLOWED_ORIGINS = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "*").split(",") if o.strip()]
+
+# allow_credentials stays off: the API uses no cookies or auth headers, and credentials combined
+# with a wildcard origin makes Starlette echo back any caller's Origin as trusted.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
